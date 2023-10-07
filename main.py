@@ -32,9 +32,10 @@ class App:
         else:
 
             #delete the policy
-            cf_policies = cloudflare.get_firewall_policies(self.name_prefix)
 
-            cloudflare.delete_firewall_policy(cf_policies[0]["id"])
+            cf_policies = cloudflare.get_firewall_policies(self.name_prefix)            
+            if len(cf_policies)>0:
+                cloudflare.delete_firewall_policy(cf_policies[0]["id"])
 
             # delete the lists
             for l in cf_lists:
@@ -118,7 +119,7 @@ class App:
 
             
             # skip comments and empty lines
-            if line.startswith("#") or line == "\n" or line == "":
+            if line.startswith("#") or line.startswith(";") or line == "\n" or line == "":
                 continue
 
             if is_hosts_file:
@@ -155,15 +156,12 @@ class App:
 
 if __name__ == "__main__":
 
-    import configparser, time
+    import configparser
 
     config = configparser.ConfigParser()
     config.read('config.ini')
-    #print(config['DEFAULT']['path'])     # -> "/path/name/" 
 
     for list in config["Lists"]:
-        #print (config["Lists"][list])
         print ("Setting list " +  list)
         app = App(list, config["Lists"][list])
         app.run()
-        time.sleep(2)
