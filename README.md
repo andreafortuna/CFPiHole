@@ -3,6 +3,8 @@
 
 Simple python script, runnable from GHA, that allows importing PiHole domain blocking lists into Cloudflare Zero-Trust Gateway configuration.
 
+(based on https://github.com/IanDesuyo/CloudflareGatewayAdBlock)
+
 ### Usage
 
 1. Create Cloudflare API token, from https://dash.cloudflare.com/profile/api-tokens, with 3 permissions `Account.Zero Trust : Edit` `Account.Account Firewall Access Rules : Edit` `Account.Access: Apps and Policies : Edit`
