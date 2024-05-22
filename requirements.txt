@@ -1,3 +1,4 @@
 requests
 configparser
 python-dotenv
+pandas

@@ -3,13 +3,12 @@ import pathlib
 from typing import List
 import requests
 import cloudflare
-
+import configparser
+import pandas as pd
 
 class App:
-    def __init__(self, adlist_name: str, adlist_url: str):
-        self.adlist_name = adlist_name
-        self.adlist_url = adlist_url
-        self.name_prefix = f"[AdBlock-{adlist_name}]"
+    def __init__(self):        
+        self.name_prefix = f"[CFPihole]"
         self.logger = logging.getLogger("main")
         self.whitelist = self.loadWhitelist()
 
@@ -17,8 +16,22 @@ class App:
         return open("whitelist.txt", "r").read().split("\n")
 
     def run(self):
-        self.download_file()
-        domains = self.convert_to_domain_list(self.adlist_name)
+        
+        config = configparser.ConfigParser()
+        config.read('config.ini')
+
+        all_domains = []
+        for list in config["Lists"]:
+
+            print ("Setting list " +  list)
+            
+            name_prefix = f"[AdBlock-{list}]"
+
+            self.download_file(config["Lists"][list], list)
+            domains = self.convert_to_domain_list(list)
+            all_domains = all_domains + domains
+
+        unique_domains = pd.unique(all_domains)
 
         # check if the list is already in Cloudflare
         cf_lists = cloudflare.get_lists(self.name_prefix)
@@ -26,7 +39,7 @@ class App:
         self.logger.info(f"Number of lists in Cloudflare: {len(cf_lists)}")
 
         # compare the lists size
-        if len(domains) == sum([l["count"] for l in cf_lists]):
+        if len(unique_domains) == sum([l["count"] for l in cf_lists]):
             self.logger.warning("Lists are the same size, skipping")
 
         else:
@@ -45,7 +58,7 @@ class App:
             cf_lists = []
 
             # chunk the domains into lists of 1000 and create them
-            for chunk in self.chunk_list(domains, 1000):
+            for chunk in self.chunk_list(unique_domains, 1000):
                 list_name = f"{self.name_prefix} {len(cf_lists) + 1}"
 
                 self.logger.info(f"Creating list {list_name}")
@@ -93,12 +106,12 @@ class App:
 
 
 
-    def download_file(self):
-        self.logger.info(f"Downloading file from {self.adlist_url}")
+    def download_file(self, url, name):
+        self.logger.info(f"Downloading file from {url}")
 
-        r = requests.get(self.adlist_url, allow_redirects=True)
+        r = requests.get(url, allow_redirects=True)
 
-        path = pathlib.Path("tmp/" + self.adlist_name)
+        path = pathlib.Path("tmp/" + name)
         open(path, "wb").write(r.content)
 
         self.logger.info(f"File size: {path.stat().st_size}")
@@ -145,9 +158,6 @@ class App:
         return domains
 
 
-        self.logger.info(f"Number of domains: {len(domains)}")
-        print (domains)
-        return domains
 
     def chunk_list(self, _list: List[str], n: int):
         for i in range(0, len(_list), n):
@@ -156,12 +166,9 @@ class App:
 
 if __name__ == "__main__":
 
-    import configparser
 
-    config = configparser.ConfigParser()
-    config.read('config.ini')
+    app = App()
+    app.run()
 
-    for list in config["Lists"]:
-        print ("Setting list " +  list)
-        app = App(list, config["Lists"][list])
-        app.run()
+
+    
