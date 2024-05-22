@@ -5,6 +5,7 @@ import requests
 import cloudflare
 import configparser
 import pandas as pd
+import os
 
 class App:
     def __init__(self):        
@@ -19,6 +20,9 @@ class App:
         
         config = configparser.ConfigParser()
         config.read('config.ini')
+
+        #check tmp dir
+        os.makedirs("./tmp", exist_ok=True)
 
         all_domains = []
         for list in config["Lists"]:
