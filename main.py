@@ -6,6 +6,7 @@ import cloudflare
 import configparser
 import pandas as pd
 import os
+import time
 
 class App:
     def __init__(self):        
@@ -27,7 +28,7 @@ class App:
         all_domains = []
         for list in config["Lists"]:
 
-            print ("Setting list " +  list)
+            self.logger.info("Setting list " +  list)
             
             name_prefix = f"[AdBlock-{list}]"
 
@@ -52,12 +53,14 @@ class App:
 
             cf_policies = cloudflare.get_firewall_policies(self.name_prefix)            
             if len(cf_policies)>0:
+                self.logger.info(f"Deleting firewall policy {cf_policies[0]["name"]}")
                 cloudflare.delete_firewall_policy(cf_policies[0]["id"])
 
             # delete the lists
             for l in cf_lists:
                 self.logger.info(f"Deleting list {l['name']}")
                 cloudflare.delete_list(l["id"])
+                time.sleep(1)
 
             cf_lists = []
 
@@ -70,6 +73,7 @@ class App:
                 _list = cloudflare.create_list(list_name, chunk)
 
                 cf_lists.append(_list)
+                time.sleep(1)
 
         # get the gateway policies
         cf_policies = cloudflare.get_firewall_policies(self.name_prefix)
