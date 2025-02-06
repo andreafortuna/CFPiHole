@@ -18,7 +18,8 @@ class App:
         return open("whitelist.txt", "r").read().split("\n")
 
     def run(self):
-        
+        logging.basicConfig(level=logging.INFO)
+
         config = configparser.ConfigParser()
         config.read('config.ini')
 
@@ -36,7 +37,7 @@ class App:
             domains = self.convert_to_domain_list(list)
             all_domains = all_domains + domains
 
-        unique_domains = pd.unique(all_domains)
+        unique_domains = pd.unique(pd.array(all_domains))
 
         # check if the list is already in Cloudflare
         cf_lists = cloudflare.get_lists(self.name_prefix)
@@ -103,7 +104,7 @@ class App:
         if len(hostname) > 255:
             return False
         hostname = hostname.rstrip(".")
-        allowed = re.compile('^[a-z0-9]([a-z0-9\-\_]{0,61}[a-z0-9])?$',re.IGNORECASE)
+        allowed = re.compile('^[a-z0-9]([a-z0-9-_]{0,61}[a-z0-9])?$',re.IGNORECASE)
         labels = hostname.split(".")
         
         # the TLD must not be all-numeric
